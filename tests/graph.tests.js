@@ -56,13 +56,11 @@ function runTestsForGraph(createGraph, name) {
     });
 
     it("should remove a cache entry if a new dependency is added two steps away and that matches the edge pattern", function () {
-      console.log('create original nodes');
       return graph.create({
         vertices: [["episode", "testValueEpisode", "Episode"], ["show", "testValueShow", "Show"]],
         edges: [["episode", "Episode", "show", "Show", "MediaFile"]]
       })
         .then(() => {
-          console.log('create mediafile');
           return graph.create({
             vertices: [["mediaFile", "testValueMediaFile", "MediaFile"]],
             edges: [["mediaFile", "MediaFile", "episode", "Episode"]]
@@ -72,6 +70,45 @@ function runTestsForGraph(createGraph, name) {
           return graph.getVertex("show", "Show");
         })
         .then(value => assert.equal(value, null));
+    });
+
+    it("should not remove a cache entry if a new dependency is added two steps away and it does not match the edge pattern", function () {
+
+      return graph.create({
+        vertices: [["episode", "testValueEpisode", "Episode"], ["show", "testValueShow", "Show"]],
+        edges: [["episode", "Episode", "show", "Show", "OtherDependency"]]
+      })
+        .then(() => {
+          return graph.create({
+            vertices: [["mediaFile", "testValueMediaFile", "MediaFile"]],
+            edges: [["mediaFile", "MediaFile", "episode", "Episode"]]
+          })
+        })
+        .then(() => {
+          return graph.getVertex("show", "Show");
+        })
+        .then(value => {
+          assert.equal(value, "testValueShow");
+        });
+    });
+
+    it("should remove a cache entry if a new dependency is added three steps away and that matches the edge pattern", function () {
+      return graph.create({
+        vertices: [["episode", "testValueEpisode", "Episode"], ["show", "testValueShow", "Show"], ["rss", "testValueRss", "Rss"]],
+        edges: [["episode", "Episode", "show", "Show"],["show", "Show", "rss", "Rss", "Episode:MediaFile"]]
+      })
+        .then(() => {
+          return graph.create({
+            vertices: [["mediaFile", "testValueMediaFile", "MediaFile"]],
+            edges: [["mediaFile", "MediaFile", "episode", "Episode"]]
+          })
+        })
+        .then(() => {
+          return graph.getVertex("rss", "Rss");
+        })
+        .then(value => {
+          assert.equal(value, null);
+        });
     });
   });
 }

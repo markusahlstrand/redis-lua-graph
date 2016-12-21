@@ -69,7 +69,7 @@ module.exports = class RedisDirectedGraph {
         this.propagateUpdate(options.destination, options.destinationType, options.sourceType)
           .then(() => {
             resolve();
-          })
+           })
           .catch(reject);
       });
     });
@@ -133,6 +133,8 @@ module.exports = class RedisDirectedGraph {
   }
 
   propagateUpdate(key, type, pattern) {
+    const currentType = type;
+
     return this.getEdges(key, type)
       .then(edges => {
         const promises = [];
@@ -143,7 +145,7 @@ module.exports = class RedisDirectedGraph {
               if(edgePattern === pattern) {
                 promises.push(this.removeVertex(edgeKey, edgeType));
               } else {
-                promises.push(this.propagateUpdate(edgeKey, edgeType + ':' + pattern));
+                promises.push(this.propagateUpdate(edgeKey, edgeType, currentType + ':' + pattern));
               }
             });
           });

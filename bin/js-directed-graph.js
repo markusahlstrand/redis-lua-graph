@@ -41,7 +41,7 @@ module.exports = class Graph {
 
   createEdge(options) {
     _.set(this.edges, `${options.sourceType}.${options.source}.${options.destinationType}.${options.destination}`, options.pattern || "all");
-    return propagateUpdate.call(this, options.destination, options.destinationType, options.sourceType);
+    return this.propagateUpdate(options.destination, options.destinationType, options.sourceType);
   }
 
   createVertex(options) {
@@ -88,28 +88,28 @@ module.exports = class Graph {
     _.unset(this.edges, `${type}.${key}`);
     return Promise.resolve();
   }
-};
 
+  propagateUpdate(key, type, pattern) {
+    // const self = this;
+    const currentType = type;
 
-function propagateUpdate(key, type, pattern) {
-  const self = this;
+    this.getEdges(key, type)
+      .then(edges => {
+        const promises = [];
 
-  this.getEdges(key, type)
-    .then(edges => {
-      const promises = [];
-
-      if(edges) {
-        _.forEach(edges, (values, edgeType) => {
-          _.forEach(values, (edgePattern, edgeKey) => {
-            if(edgePattern === pattern) {
-              promises.push(self.removeVertex(edgeKey, edgeType));
-            } else {
-              promises.push(propagateUpdate(edgeKey, edgeType + ':' + pattern));
-            }
+        if(edges) {
+          _.forEach(edges, (values, edgeType) => {
+            _.forEach(values, (edgePattern, edgeKey) => {
+              if(edgePattern === pattern) {
+                promises.push(this.removeVertex(edgeKey, edgeType));
+              } else {
+                promises.push(this.propagateUpdate(edgeKey, edgeType, currentType + ':' + pattern));
+              }
+            });
           });
-        });
-      }
+        }
 
-      return Promise.all(promises);
-    })
-}
+        return Promise.all(promises);
+      })
+  }
+};
