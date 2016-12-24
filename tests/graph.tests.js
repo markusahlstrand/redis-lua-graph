@@ -45,6 +45,40 @@ function runTestsForGraph(createGraph, name) {
         });
     });
 
+    it("should add two nodes with a cache dependency and a pattern", function () {
+      return graph.create({
+        vertices: [["sourceNode", "testValueA", "A"], ["destinationNode", "testValueB", "B"]],
+        edges: [["sourceNode", "A", "destinationNode", "B", "C"]] // A  has a dependency on B
+      })
+        .then(() => {
+          return graph.getVertex("sourceNode", "A")
+        })
+        .then(value => assert.equal(value, "testValueA"))
+        .then(() => graph.getVertex("destinationNode", "B"))
+        .then(value => assert.equal(value, "testValueB"))
+        .then(() => graph.getEdges("sourceNode", "A"))
+        .then(value => {
+          assert.equal(value.B.destinationNode, "C")
+        });
+    });
+
+    it("should add two nodes with a cache dependency and a nested pattern", function () {
+      return graph.create({
+        vertices: [["sourceNode", "testValueA", "A"], ["destinationNode", "testValueB", "B"]],
+        edges: [["sourceNode", "A", "destinationNode", "B", "C:D"]] // A  has a dependency on B
+      })
+        .then(() => {
+          return graph.getVertex("sourceNode", "A")
+        })
+        .then(value => assert.equal(value, "testValueA"))
+        .then(() => graph.getVertex("destinationNode", "B"))
+        .then(value => assert.equal(value, "testValueB"))
+        .then(() => graph.getEdges("sourceNode", "A"))
+        .then(value => {
+          assert.equal(value.B.destinationNode, "C:D")
+        });
+    });
+
     it("should remove a cache entry if one of the dependencies are removed", function () {
       return graph.create({
         vertices: [["sourceNode", "testValueA", "A"], ["b", "destinationNode", "B"]],
